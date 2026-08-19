@@ -1,0 +1,22 @@
+# Các thư mục chứa thư viện nặng không cần up
+node_modules/
+.next/
+out/
+build/
+
+# Các file chứa thông tin nhạy cảm, mật khẩu, Token (RẤT QUAN TRỌNG)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+
+# Các file rác của hệ điều hành
+.DS_Store
+Thumbs.db
+*.log
+
+# File công cụ nội bộ (ví dụ cái tool tự động up code của chúng ta)
+up_code_nhanh.bat
+.gemini/
