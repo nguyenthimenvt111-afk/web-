@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Comment } from '@/types';
 import { formatRelativeTime, getAvatarFallback } from '@/lib/utils';
 import { Send, Loader2 } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 
 interface CommentSectionProps {
   postId: string;
@@ -15,7 +16,9 @@ export default function CommentSection({ postId, onCommentAdded }: CommentSectio
   const [isLoading, setIsLoading] = useState(true);
   const [newComment, setNewComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const supabaseRef = useRef(createClient());
 
+  // Fetch comments lần đầu
   useEffect(() => {
     const fetchComments = async () => {
       const res = await fetch(`/api/posts/${postId}/comments`);
@@ -25,6 +28,42 @@ export default function CommentSection({ postId, onCommentAdded }: CommentSectio
     };
     fetchComments();
   }, [postId]);
+
+  // Supabase Realtime: lắng nghe comment mới từ người khác
+  useEffect(() => {
+    const supabase = supabaseRef.current;
+
+    const channel = supabase
+      .channel(`comments-${postId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'comments',
+          filter: `post_id=eq.${postId}`,
+        },
+        async (payload) => {
+          // Fetch đầy đủ thông tin comment mới (kèm author)
+          const res = await fetch(`/api/posts/${postId}/comments`);
+          const data = await res.json();
+          const allComments: Comment[] = data.data || [];
+          const newComment = allComments.find((c) => c.id === payload.new.id);
+          if (newComment) {
+            setComments((prev) => {
+              if (prev.find((c) => c.id === newComment.id)) return prev;
+              return [...prev, newComment];
+            });
+            onCommentAdded?.();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [postId, onCommentAdded]);
 
   const submitComment = async () => {
     if (!newComment.trim() || isSubmitting) return;
