@@ -228,6 +228,29 @@ async function handleCommand(message: any) {
     return;
   }
 
+  // /xacthuc <userId> — duyệt xác thực khuôn mặt
+  if (text.startsWith('/xacthuc ')) {
+    const targetUserId = text.split(' ')[1]?.trim();
+    if (!targetUserId) {
+      await sendTelegramMessage('⚠️ Thiếu ID. Cú pháp: <code>/xacthuc [Mã_User_ID]</code>');
+      return;
+    }
+
+    const { data: updatedUser, error } = await supabase
+      .from('users')
+      .update({ is_verified: true })
+      .eq('id', targetUserId)
+      .select('username, display_name')
+      .single();
+
+    if (error || !updatedUser) {
+      await sendTelegramMessage(`❌ <b>Lỗi:</b> Không tìm thấy user có ID <code>${targetUserId}</code>`);
+    } else {
+      await sendTelegramMessage(`✅ <b>Thành công!</b>\n\nĐã cấp Tích Xanh (Xác thực Cấp 2) cho người dùng <b>@${updatedUser.username}</b>!`);
+    }
+    return;
+  }
+
   // /status — tổng quan hệ thống
   if (text === '/status') {
     const [usersRes, postsRes, settingRes] = await Promise.all([

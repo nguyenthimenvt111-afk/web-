@@ -13,7 +13,7 @@ export async function GET(
   // Lấy thông tin user
   const { data: user, error } = await supabase
     .from('users')
-    .select('id, username, display_name, avatar_url, bio, role, status, created_at')
+    .select('id, username, display_name, avatar_url, bio, role, status, is_verified, created_at')
     .eq('username', username)
     .single();
 

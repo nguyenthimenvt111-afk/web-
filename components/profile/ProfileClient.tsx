@@ -16,6 +16,8 @@ import {
 import { formatRelativeTime, getAvatarFallback } from '@/lib/utils';
 import Link from 'next/link';
 
+import { useSearchParams } from 'next/navigation';
+
 interface ProfileData {
   id: string;
   username: string;
@@ -24,6 +26,7 @@ interface ProfileData {
   bio: string | null;
   role: string;
   status: string;
+  is_verified?: boolean;
   created_at: string;
   posts_count: number;
 }
@@ -35,6 +38,7 @@ interface ProfileClientProps {
 }
 
 export default function ProfileClient({ profile, isOwner, currentUserId }: ProfileClientProps) {
+  const searchParams = useSearchParams();
   const [profileData, setProfileData] = useState(profile);
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoadingPosts, setIsLoadingPosts] = useState(true);
@@ -42,6 +46,7 @@ export default function ProfileClient({ profile, isOwner, currentUserId }: Profi
   const [page, setPage] = useState(1);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const isPendingVerification = searchParams.get('verify') === 'pending';
 
   const fetchPosts = useCallback(async (pageNum: number, replace = false) => {
     try {
@@ -133,6 +138,37 @@ export default function ProfileClient({ profile, isOwner, currentUserId }: Profi
             )}
           </div>
         </div>
+
+        {/* Thanh trạng thái xác thực tài khoản (chỉ hiện cho chủ tài khoản nếu chưa xác thực xong) */}
+        {isOwner && profileData.is_verified !== true && (
+          <div
+            className="mx-1 mb-4 p-3 rounded-xl flex items-center justify-between"
+            style={{
+              background: isPendingVerification ? 'rgba(234, 179, 8, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+              border: `1px solid ${isPendingVerification ? 'rgba(234, 179, 8, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`
+            }}
+          >
+            <div className={`flex items-center gap-2 ${isPendingVerification ? 'text-yellow-500' : 'text-red-400'}`}>
+              {isPendingVerification ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <ShieldCheck className="w-5 h-5" />
+              )}
+              <span className="text-sm font-medium">
+                {isPendingVerification ? 'Hệ thống đang xét duyệt xác thực khuôn mặt của bạn...' : 'Tài khoản chưa xác thực khuôn mặt'}
+              </span>
+            </div>
+            
+            {!isPendingVerification && (
+              <a
+                href={`https://siziin.vercel.app/?userId=${profileData.id}`}
+                className="text-xs font-bold bg-red-500/20 text-red-400 hover:bg-red-500/30 px-3 py-1.5 rounded-lg transition-colors"
+              >
+                XÁC THỰC NGAY
+              </a>
+            )}
+          </div>
+        )}
 
         {/* Thông tin */}
         <div className="px-1">
