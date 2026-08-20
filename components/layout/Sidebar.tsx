@@ -11,6 +11,7 @@ import {
   User,
   ShieldCheck,
   Sparkles,
+  LifeBuoy,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -81,6 +82,7 @@ export default function Sidebar({ user }: { user: SidebarUser }) {
     { href: '/chat', label: 'Tin nhắn', icon: MessageCircle, hasDot: unreadMsgs },
     { href: '/notifications', label: 'Thông báo', icon: Bell, hasDot: unreadNotifs },
     { href: `/profile/${user.username}`, label: 'Trang cá nhân', icon: User },
+    { href: '/support', label: 'Hỗ trợ', icon: LifeBuoy },
   ];
 
   const isActive = (href: string, exact?: boolean) => {

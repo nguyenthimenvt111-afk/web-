@@ -258,6 +258,39 @@ async function handleCommand(message: any) {
     return;
   }
 
+  // /reply <ticket_id> <nội dung> — Trả lời yêu cầu hỗ trợ
+  if (text.startsWith('/reply ')) {
+    const parts = text.substring(7).trim().split(' ');
+    const ticketId = parts[0]?.trim();
+    const replyContent = parts.slice(1).join(' ').trim();
+
+    if (!ticketId || !replyContent) {
+      await sendTelegramMessage(
+        '⚠️ Cú pháp sai!\n\nĐúng cú pháp:\n<code>/reply [Ticket_ID] [Nội dung trả lời]</code>\n\nVí dụ:\n<code>/reply abc-123 Chúng tôi đã xử lý vấn đề của bạn!</code>'
+      );
+      return;
+    }
+
+    // Gọi API nội bộ để lưu câu trả lời
+    const host = process.env.NEXTAUTH_URL || 'https://incog-six.vercel.app';
+    const res = await fetch(`${host}/api/support/reply`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-internal-secret': process.env.NEXTAUTH_SECRET || '',
+      },
+      body: JSON.stringify({ ticket_id: ticketId, content: replyContent }),
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      await sendTelegramMessage(`✅ <b>Đã trả lời thành công!</b>\n\n🎫 Ticket: <code>${ticketId}</code>\n💬 Nội dung: ${replyContent}`);
+    } else {
+      await sendTelegramMessage(`❌ <b>Lỗi:</b> ${data.error || 'Không thể gửi phản hồi'}`);
+    }
+    return;
+  }
+
   // /status — tổng quan hệ thống
   if (text === '/status') {
     const [usersRes, postsRes, settingRes] = await Promise.all([
