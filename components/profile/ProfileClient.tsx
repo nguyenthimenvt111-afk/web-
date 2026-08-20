@@ -174,18 +174,31 @@ export default function ProfileClient({ profile, isOwner, currentUserId }: Profi
         <div className="px-1">
           <div className="flex items-center gap-2 flex-wrap mb-1">
             <h1 className="text-xl font-bold text-white">{displayName}</h1>
+            
+            {/* Tích xanh nếu đã xác thực khuôn mặt */}
+            {profileData.is_verified && (
+              <BadgeCheck className="w-6 h-6 text-blue-500" style={{ fill: '#3b82f6', color: 'white' }} />
+            )}
+
             {profileData.role === 'admin' && (
               <span className="badge-admin flex items-center gap-1">
                 <ShieldCheck className="w-3 h-3" />
                 Admin
               </span>
             )}
-            {profileData.status === 'approved' && profileData.role !== 'admin' && (
-              <BadgeCheck className="w-5 h-5" style={{ color: '#818cf8' }} />
-            )}
           </div>
 
-          <p className="text-slate-400 text-sm mb-3">@{profileData.username}</p>
+          <div className="flex items-center gap-3 mb-3">
+            <p className="text-slate-400 text-sm">@{profileData.username}</p>
+            
+            {/* Chữ "Đã xác minh người dùng" */}
+            {profileData.is_verified && (
+              <span className="text-xs font-medium text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded-full border border-blue-500/20 flex items-center gap-1">
+                <BadgeCheck className="w-3 h-3" />
+                Đã xác minh người dùng
+              </span>
+            )}
+          </div>
 
           {profileData.bio && (
             <p className="text-slate-300 text-sm leading-relaxed mb-4 whitespace-pre-wrap">
