@@ -11,6 +11,7 @@ for /f "tokens=1-2 delims=: " %%a in ('time /t') do set gio=%%a%%b
 
 git commit -m "Cap nhat code moi - %ngay% %gio%"
 
+git pull --rebase origin main
 git push origin main
 
 echo.
