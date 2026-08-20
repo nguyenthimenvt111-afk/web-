@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { createAdminClient } from '@/lib/supabase/server';
-import { Users, FileText, ShieldCheck, Clock } from 'lucide-react';
+import { Users, FileText, ShieldCheck, Clock, Settings } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -86,6 +86,12 @@ export default async function AdminDashboard() {
               'Không có tài khoản nào đang chờ'
             )}
           </p>
+        </Link>
+
+        <Link href="/admin/settings" className="card-hover group block">
+          <Settings className="w-8 h-8 mb-3 transition-transform group-hover:scale-110" style={{ color: '#f472b6' }} />
+          <h2 className="text-lg font-semibold text-white mb-1">Cài đặt Hệ thống</h2>
+          <p className="text-slate-400 text-sm">Chỉnh sửa thông báo chào mừng (Popup) và các cấu hình khác</p>
         </Link>
       </div>
     </div>

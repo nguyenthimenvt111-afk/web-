@@ -2,6 +2,7 @@ import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import Sidebar from '@/components/layout/Sidebar';
 import Topbar from '@/components/layout/Topbar';
+import WelcomePopup from '@/components/layout/WelcomePopup';
 
 export default async function MainLayout({
   children,
@@ -21,6 +22,7 @@ export default async function MainLayout({
 
   return (
     <div className="min-h-screen flex">
+      <WelcomePopup />
       <Sidebar user={user} />
       {/* Desktop: margin-left cho Sidebar cố định. Mobile: không có margin */}
       <div className="flex-1 flex flex-col ml-0 md:ml-64">
