@@ -98,6 +98,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  // --- Tạo thông báo cho người nhận (để hiển thị dấu ! đỏ) ---
+  const { data: otherParticipants } = await supabase
+    .from('conversation_participants')
+    .select('user_id')
+    .eq('conversation_id', conversation_id)
+    .neq('user_id', session?.user?.id || '');
+
+  if (otherParticipants && otherParticipants.length > 0) {
+    const notifications = otherParticipants.map(p => ({
+      user_id: p.user_id,
+      type: 'message',
+      data: { conversation_id, sender_id: session?.user?.id || '' }
+    }));
+    await supabase.from('notifications').insert(notifications);
+  }
+
   // Supabase Realtime will automatically broadcast the INSERT event
   return NextResponse.json({ data }, { status: 201 });
 }

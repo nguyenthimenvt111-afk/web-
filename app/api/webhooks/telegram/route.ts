@@ -246,6 +246,13 @@ async function handleCommand(message: any) {
     if (error || !updatedUser) {
       await sendTelegramMessage(`❌ <b>Lỗi:</b> Không tìm thấy user có ID <code>${targetUserId}</code>`);
     } else {
+      // Gửi thông báo trực tiếp vào app cho người dùng
+      await supabase.from('notifications').insert({
+        user_id: targetUserId,
+        type: 'verified',
+        data: { message: 'Tài khoản của bạn đã được duyệt và cấp Tích Xanh!' }
+      });
+
       await sendTelegramMessage(`✅ <b>Thành công!</b>\n\nĐã cấp Tích Xanh (Xác thực Cấp 2) cho người dùng <b>@${updatedUser.username}</b>!`);
     }
     return;

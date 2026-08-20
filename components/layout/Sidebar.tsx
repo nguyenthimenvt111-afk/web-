@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
 import {
   Home,
   MessageCircle,
@@ -23,11 +25,61 @@ interface SidebarUser {
 
 export default function Sidebar({ user }: { user: SidebarUser }) {
   const pathname = usePathname();
+  const [unreadMsgs, setUnreadMsgs] = useState(false);
+  const [unreadNotifs, setUnreadNotifs] = useState(false);
+
+  useEffect(() => {
+    const supabase = createClient();
+
+    // Lấy số lượng thông báo chưa đọc khi vừa mở web
+    const fetchUnread = async () => {
+      const { data } = await supabase
+        .from('notifications')
+        .select('type, is_read')
+        .eq('user_id', user.id)
+        .eq('is_read', false);
+      
+      if (data) {
+        setUnreadMsgs(data.some(n => n.type === 'message'));
+        setUnreadNotifs(data.some(n => n.type !== 'message'));
+      }
+    };
+    fetchUnread();
+
+    // Lắng nghe Realtime khi có thông báo mới (tin nhắn hoặc xác thực)
+    const channel = supabase
+      .channel('sidebar_notifications')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+        (payload) => {
+          if (payload.new.type === 'message') {
+            if (!pathname.startsWith('/chat')) setUnreadMsgs(true);
+          } else {
+            if (!pathname.startsWith('/notifications')) setUnreadNotifs(true);
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+        () => fetchUnread()
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [user.id, pathname]);
+
+  // Xóa chấm đỏ khi truy cập đúng trang
+  useEffect(() => {
+    if (pathname.startsWith('/chat')) setUnreadMsgs(false);
+    if (pathname.startsWith('/notifications')) setUnreadNotifs(false);
+  }, [pathname]);
 
   const navItems = [
     { href: '/', label: 'Trang chủ', icon: Home, exact: true },
-    { href: '/chat', label: 'Tin nhắn', icon: MessageCircle },
-    { href: '/notifications', label: 'Thông báo', icon: Bell },
+    { href: '/chat', label: 'Tin nhắn', icon: MessageCircle, hasDot: unreadMsgs },
+    { href: '/notifications', label: 'Thông báo', icon: Bell, hasDot: unreadNotifs },
     { href: `/profile/${user.username}`, label: 'Trang cá nhân', icon: User },
   ];
 
@@ -69,9 +121,17 @@ export default function Sidebar({ user }: { user: SidebarUser }) {
             <Link
               key={item.href}
               href={item.href}
-              className={isActive(item.href, item.exact) ? 'sidebar-item-active' : 'sidebar-item'}
+              className={isActive(item.href, item.exact) ? 'sidebar-item-active relative' : 'sidebar-item relative'}
             >
-              <item.icon className="w-5 h-5" />
+              <div className="relative">
+                <item.icon className="w-5 h-5" />
+                {item.hasDot && (
+                  <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 border-2 border-[rgb(15,23,42)]"></span>
+                  </span>
+                )}
+              </div>
               <span className="font-medium">{item.label}</span>
             </Link>
           ))}
@@ -128,10 +188,18 @@ export default function Sidebar({ user }: { user: SidebarUser }) {
             <Link
               key={item.href}
               href={item.href}
-              className="flex flex-col items-center gap-0.5 py-2.5 px-3 transition-colors"
+              className="flex flex-col items-center gap-0.5 py-2.5 px-3 transition-colors relative"
               style={{ color: active ? '#818cf8' : '#64748b' }}
             >
-              <item.icon className="w-5 h-5" />
+              <div className="relative">
+                <item.icon className="w-5 h-5" />
+                {item.hasDot && (
+                  <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 border-2 border-[rgb(15,23,42)]"></span>
+                  </span>
+                )}
+              </div>
               <span className="text-[10px] font-medium">{item.label}</span>
             </Link>
           );
